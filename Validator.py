@@ -221,3 +221,22 @@ class EnumField(ValidationField):
             return True
 
         return self._invoke_error()
+
+
+def prepare_validation_errors(errors, compact=False):
+    errors_dict = {}
+    errors_arr = []
+
+    for err_arr in errors:
+        errs = []
+
+        for err in err_arr[1]:
+            errs.append(err)
+            errors_arr.append(err)
+
+        errors_dict[err_arr[0]] = errs
+
+    if compact:
+        return errors_arr
+
+    return errors_dict
