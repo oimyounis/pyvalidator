@@ -13,8 +13,7 @@ class Validator:
         self._errors = {}
         self.fields = {}
 
-        for fieldname in messages:
-            msg = messages[fieldname]
+        for fieldname, msg in messages.items():
             parts = fieldname.split('.')
             if parts[1] == self.RULE_REQUIRED:
                 if parts[0] not in self.messages:
@@ -37,12 +36,11 @@ class Validator:
 
                 self.messages[parts[0]][self.RULE_ENUM] = msg
 
-        for fieldname in rules:
-            _rules = str(rules[fieldname])
-            _rules = _rules.strip(' ')
+        for fieldname, _rules in rules.items():
+            _rules = str(_rules).strip()
             ruleparts = _rules.split(';')
             for rule in ruleparts:
-                rule = rule.strip(' ')
+                rule = rule.strip()
                 enumvalues = []
 
                 if rule != '':
@@ -110,8 +108,7 @@ class Validator:
     def valid(self):
         valid = True
 
-        for fieldname in self.fields:
-            fieldlist = self.fields[fieldname]
+        for fieldname, fieldlist in self.fields.items():
             for field in fieldlist:
                 check = field.validate()
                 if check is not True:
@@ -125,8 +122,7 @@ class Validator:
     def errors(self, compact = False):
         if compact:
             msgs = []
-            for f in self._errors:
-                msglist = self._errors[f]
+            for msglist in self._errors.values():
                 for msg in msglist:
                     msgs.append(msg)
 
@@ -210,14 +206,8 @@ class EnumField(ValidationField):
     def validate(self):
         if not self.value:
             return self._invoke_error()
-
-        found = False
-        for val in self.Meta.values:
-            if self.value == val:
-                found = True
-                break
-
-        if found:
+        
+        if self.value in self.Meta.values:
             return True
 
         return self._invoke_error()
