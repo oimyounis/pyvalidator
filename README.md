@@ -14,7 +14,6 @@ A simple python data validator inspired by Laravel's validator.
 - boolean
 - alpha
 - alpha numeric
-- array (enum)
 - lt
 - lte
 - gt
