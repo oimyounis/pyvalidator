@@ -1,10 +1,12 @@
 import re
 
+
 class Validator:
     RULE_REQUIRED = 'required'
     RULE_EMAIL = 'email'
     RULE_NUMERIC = 'numeric'
-    RULE_ENUM = 'enum'
+    RULE_IN = 'in'
+    RULE_MAX = 'max'
 
     def __init__(self, data_dict, rules, messages={}):
         self.data = data_dict
@@ -15,44 +17,31 @@ class Validator:
 
         for fieldname, msg in messages.items():
             parts = fieldname.split('.')
-            if parts[1] == self.RULE_REQUIRED:
-                if parts[0] not in self.messages:
-                    self.messages[parts[0]] = {}
+            field = parts[0]
+            rule = parts[1]
 
-                self.messages[parts[0]][self.RULE_REQUIRED] = msg
-            elif parts[1] == self.RULE_EMAIL:
-                if parts[0] not in self.messages:
-                    self.messages[parts[0]] = {}
+            if field not in self.messages:
+                self.messages[field] = {}
 
-                self.messages[parts[0]][self.RULE_EMAIL] = msg
-            elif parts[1] == self.RULE_NUMERIC:
-                if parts[0] not in self.messages:
-                    self.messages[parts[0]] = {}
-
-                self.messages[parts[0]][self.RULE_NUMERIC] = msg
-            elif parts[1] == self.RULE_ENUM:
-                if parts[0] not in self.messages:
-                    self.messages[parts[0]] = {}
-
-                self.messages[parts[0]][self.RULE_ENUM] = msg
+            self.messages[field][rule] = msg
 
         for fieldname, _rules in rules.items():
             _rules = str(_rules).strip()
-            ruleparts = _rules.split(';')
+            ruleparts = _rules.split('|')
             for rule in ruleparts:
                 rule = rule.strip()
-                enumvalues = []
+                rulevalue = ''
 
-                if rule != '':
+                if rule:
                     if rule.find(':') > -1:
-                        enumparts = rule.split(':')
-                        rule = enumparts[0]
-                        enumvalues = enumparts[1].split(',')
+                        ruleparts = rule.split(':')
+                        rule = ruleparts[0].strip()
+                        rulevalue = ruleparts[1].strip()
 
-                    if rule == self.RULE_REQUIRED:
+                    if rule == Validator.RULE_REQUIRED:
                         message = None
-                        if fieldname in self.messages and self.RULE_REQUIRED in self.messages[fieldname]:
-                            message = self.messages[fieldname][self.RULE_REQUIRED]
+                        if fieldname in self.messages and Validator.RULE_REQUIRED in self.messages[fieldname]:
+                            message = self.messages[fieldname][Validator.RULE_REQUIRED]
 
                         value = None
                         if fieldname in self.data:
@@ -62,10 +51,10 @@ class Validator:
                             self.fields[fieldname] = []
 
                         self.fields[fieldname].append(RequiredField(fieldname, value, message))
-                    elif rule == self.RULE_EMAIL:
+                    elif rule == Validator.RULE_EMAIL:
                         message = None
-                        if fieldname in self.messages and self.RULE_EMAIL in self.messages[fieldname]:
-                            message = self.messages[fieldname][self.RULE_EMAIL]
+                        if fieldname in self.messages and Validator.RULE_EMAIL in self.messages[fieldname]:
+                            message = self.messages[fieldname][Validator.RULE_EMAIL]
 
                         value = None
                         if fieldname in self.data:
@@ -75,10 +64,10 @@ class Validator:
                             self.fields[fieldname] = []
 
                         self.fields[fieldname].append(EmailField(fieldname, value, message))
-                    elif rule == self.RULE_NUMERIC:
+                    elif rule == Validator.RULE_NUMERIC:
                         message = None
-                        if fieldname in self.messages and self.RULE_NUMERIC in self.messages[fieldname]:
-                            message = self.messages[fieldname][self.RULE_NUMERIC]
+                        if fieldname in self.messages and Validator.RULE_NUMERIC in self.messages[fieldname]:
+                            message = self.messages[fieldname][Validator.RULE_NUMERIC]
 
                         value = None
                         if fieldname in self.data:
@@ -88,10 +77,12 @@ class Validator:
                             self.fields[fieldname] = []
 
                         self.fields[fieldname].append(NumericField(fieldname, value, message))
-                    elif rule == self.RULE_ENUM:
+                    elif rule == Validator.RULE_IN:
+                        enumvalues = rulevalue.replace(' ', '').split(',')
+
                         message = None
-                        if fieldname in self.messages and self.RULE_ENUM in self.messages[fieldname]:
-                            message = self.messages[fieldname][self.RULE_ENUM]
+                        if fieldname in self.messages and Validator.RULE_IN in self.messages[fieldname]:
+                            message = self.messages[fieldname][Validator.RULE_IN]
 
                         value = None
                         if fieldname in self.data:
@@ -100,10 +91,26 @@ class Validator:
                         if not fieldname in self.fields:
                             self.fields[fieldname] = []
 
-                        enumfield = EnumField(fieldname, value, message)
+                        enumfield = InField(fieldname, value, message)
                         enumfield.set_values(enumvalues)
 
                         self.fields[fieldname].append(enumfield)
+                    elif rule == Validator.RULE_MAX:
+                        message = None
+                        if fieldname in self.messages and Validator.RULE_MAX in self.messages[fieldname]:
+                            message = self.messages[fieldname][Validator.RULE_MAX]
+
+                        value = None
+                        if fieldname in self.data:
+                            value = self.data[fieldname]
+
+                        if not fieldname in self.fields:
+                            self.fields[fieldname] = []
+
+                        maxfield = MaxField(fieldname, value, message)
+                        maxfield.set_value(rulevalue)
+
+                        self.fields[fieldname].append(maxfield)
 
     def valid(self):
         valid = True
@@ -119,7 +126,7 @@ class Validator:
 
         return valid
 
-    def errors(self, compact = False):
+    def errors(self, compact=False):
         if compact:
             msgs = []
             for msglist in self._errors.values():
@@ -132,14 +139,14 @@ class Validator:
 
 
 class ValidationField:
-    def __init__(self, fieldname, value, message = None):
+    def __init__(self, fieldname, value, message=None):
         self.fieldname = fieldname
         self.value = value
         self.message = message
         classname = self.__class__.__name__.lower().replace('field', '')
         self.rule = classname
 
-        if message != None:
+        if message is not None:
             self.message = message
         else:
             self.construct_message()
@@ -161,7 +168,7 @@ class RequiredField(ValidationField):
         message = 'Field {#fieldname#} is required'
 
     def validate(self):
-        if self.value == '' or self.value == None:
+        if self.value == '' or self.value is None or isinstance(self.value, (list, tuple, set)) and not self.value:
             return self._invoke_error()
         return True
 
@@ -181,12 +188,13 @@ class NumericField(ValidationField):
         message = 'Field {#fieldname#} accepts numbers only'
 
     def validate(self):
-        if not self.value or not re.match(r"^-?([1-9]+[0-9]*|([0-9]*\.[0-9]+))(e([1-9]+)|e-([1-9]+))?$", self.value):
+        if self.value and not re.match(r"^-?([1-9]+[0-9]*|([0-9]*\.[0-9]+))(e([1-9]+)|e\+([1-9]+)|e-([1-9]+))?$", str(self.value))\
+                or self.value and not isinstance(self.value, (str, int, float)):
             return self._invoke_error()
         return True
 
 
-class EnumField(ValidationField):
+class InField(ValidationField):
     class Meta:
         message = 'Field {#fieldname#} accepts only these values: {#values#}'
         values = []
@@ -204,11 +212,48 @@ class EnumField(ValidationField):
             self.message = self.message.replace('{#values#}', ', '.join(self.Meta.values))
 
     def validate(self):
-        if not self.value:
-            return self._invoke_error()
-        
-        if self.value in self.Meta.values:
+        if self.value in self.Meta.values or self.value == '' or self.value is None:
             return True
+
+        return self._invoke_error()
+
+
+class MaxField(ValidationField):
+    class Meta:
+        message = 'Field {#fieldname#} has a maximum of: {#value#}'
+        value = None
+
+    def set_value(self, value):
+        isstr = isinstance(value, str)
+        isfloating = isstr and value.find('.') > -1
+
+        if isstr:
+            try:
+                value = float(value) if isfloating else int(value)
+            except ValueError:
+                raise ValueError('Value supplied to the "max" rule must be of type int or float')
+
+        self.Meta.value = value
+        self.construct_message()
+
+    def get_value(self):
+        return self.Meta.value
+
+    def construct_message(self):
+        if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
+            super(MaxField, self).construct_message()
+            self.message = self.message.replace('{#value#}', str(self.Meta.value))
+
+    def validate(self):
+        if self.value is None:
+            return True
+
+        if isinstance(self.value, (str, list, tuple, set)):
+            if len(self.value) <= self.get_value():
+                return True
+        elif isinstance(self.value, (int, float)):
+            if self.value <= self.get_value():
+                return True
 
         return self._invoke_error()
 
@@ -230,3 +275,16 @@ def prepare_validation_errors(errors, compact=False):
         return errors_arr
 
     return errors_dict
+
+
+# data = {
+#     'field': '356642',
+# }
+#
+# rules = {
+#     'field': 'max:5',
+# }
+#
+# validator = Validator(data, rules)
+# print(validator.valid())
+# print(validator.errors())
