@@ -7,6 +7,7 @@ class Validator:
     RULE_NUMERIC = 'numeric'
     RULE_IN = 'in'
     RULE_MAX = 'max'
+    RULE_MIN = 'min'
 
     def __init__(self, data_dict, rules, messages={}):
         self.data = data_dict
@@ -111,6 +112,22 @@ class Validator:
                         maxfield.set_value(rulevalue)
 
                         self.fields[fieldname].append(maxfield)
+                    elif rule == Validator.RULE_MIN:
+                        message = None
+                        if fieldname in self.messages and Validator.RULE_MIN in self.messages[fieldname]:
+                            message = self.messages[fieldname][Validator.RULE_MIN]
+
+                        value = None
+                        if fieldname in self.data:
+                            value = self.data[fieldname]
+
+                        if not fieldname in self.fields:
+                            self.fields[fieldname] = []
+
+                        minfield = MinField(fieldname, value, message)
+                        minfield.set_value(rulevalue)
+
+                        self.fields[fieldname].append(minfield)
 
     def valid(self):
         valid = True
@@ -248,11 +265,69 @@ class MaxField(ValidationField):
         if self.value is None:
             return True
 
+        isstr = isinstance(self.value, str)
+        isfloating = isstr and self.value.find('.') > -1
+
+        if isstr:
+            try:
+                self.value = float(self.value) if isfloating else int(self.value)
+            except ValueError:
+                pass
+
         if isinstance(self.value, (str, list, tuple, set)):
             if len(self.value) <= self.get_value():
                 return True
         elif isinstance(self.value, (int, float)):
             if self.value <= self.get_value():
+                return True
+
+        return self._invoke_error()
+
+
+class MinField(ValidationField):
+    class Meta:
+        message = 'Field {#fieldname#} has a minimum of: {#value#}'
+        value = None
+
+    def set_value(self, value):
+        isstr = isinstance(value, str)
+        isfloating = isstr and value.find('.') > -1
+
+        if isstr:
+            try:
+                value = float(value) if isfloating else int(value)
+            except ValueError:
+                raise ValueError('Value supplied to the "min" rule must be of type int or float')
+
+        self.Meta.value = value
+        self.construct_message()
+
+    def get_value(self):
+        return self.Meta.value
+
+    def construct_message(self):
+        if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
+            super(MinField, self).construct_message()
+            self.message = self.message.replace('{#value#}', str(self.Meta.value))
+
+    def validate(self):
+        if self.value is None:
+            return True
+
+        isstr = isinstance(self.value, str)
+        isfloating = isstr and self.value.find('.') > -1
+
+        if isstr:
+            try:
+                self.value = float(self.value) if isfloating else int(self.value)
+            except ValueError:
+                pass
+
+        if isinstance(self.value, (str, list, tuple, set)):
+            if len(self.value) >= self.get_value():
+                return True
+        elif isinstance(self.value, (int, float)):
+            if self.value >= self.get_value():
                 return True
 
         return self._invoke_error()
@@ -275,16 +350,3 @@ def prepare_validation_errors(errors, compact=False):
         return errors_arr
 
     return errors_dict
-
-
-# data = {
-#     'field': '356642',
-# }
-#
-# rules = {
-#     'field': 'max:5',
-# }
-#
-# validator = Validator(data, rules)
-# print(validator.valid())
-# print(validator.errors())

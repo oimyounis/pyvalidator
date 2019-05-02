@@ -8,7 +8,7 @@ A simple python data validator inspired by Laravel's validator.
 - numeric &#10004;
 - in &#10004;
 - max &#10004;
-- min
+- min &#10004;
 - date
 - unique
 - boolean
