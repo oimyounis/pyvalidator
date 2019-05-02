@@ -7,7 +7,7 @@ A simple python data validator inspired by Laravel's validator.
 - email &#10004;
 - numeric &#10004;
 - in &#10004;
-- max
+- max &#10004;
 - min
 - date
 - unique
