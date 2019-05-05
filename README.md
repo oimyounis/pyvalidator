@@ -1,8 +1,8 @@
 # pyvalidator
 
-A simple python data validator inspired by [Laravel's Validator](https://laravel.com/docs/5.8/validation).
+A simple python data validator inspired by [Laravel's Validator](https://laravel.com/docs/5.8/validation#available-validation-rules).
 
-#### Rules:
+#### Supported Rules:
 - [required](https://laravel.com/docs/5.8/validation#rule-required) &#10004;
 - [email](https://laravel.com/docs/5.8/validation#rule-email) &#10004;
 - [numeric](https://laravel.com/docs/5.8/validation#rule-numeric) &#10004;
