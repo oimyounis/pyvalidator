@@ -11,7 +11,7 @@ A simple python data validator inspired by Laravel's validator.
 - min &#10004;
 - not_in &#10004;
 - boolean &#10004;
-- lt
+- lt &#10004;
 - lte
 - gt
 - gte

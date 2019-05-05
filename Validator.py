@@ -1,4 +1,5 @@
 import re
+from helpers import is_str, is_numeric, is_iterable
 
 
 class Validator:
@@ -10,6 +11,7 @@ class Validator:
     RULE_MIN = 'min'
     RULE_NOT_IN = 'not_in'
     RULE_BOOLEAN = 'boolean'
+    RULE_LT = 'lt'
 
     @classmethod
     def _is_valid_rule(cls, rule):
@@ -92,6 +94,11 @@ class Validator:
                         self.fields[fieldname].append(enumfield)
                     elif rule == Validator.RULE_BOOLEAN:
                         self.fields[fieldname].append(BooleanField(fieldname, value, message))
+                    elif rule == Validator.RULE_LT:
+                        lessthanfield = LessThanField(fieldname, value, message, self)
+                        lessthanfield.set_value(rulevalue)
+
+                        self.fields[fieldname].append(lessthanfield)
 
     def valid(self):
         valid = True
@@ -120,12 +127,13 @@ class Validator:
 
 
 class ValidationField:
-    def __init__(self, fieldname, value, message=None):
+    def __init__(self, fieldname, value, message=None, _validator=None):
         self.fieldname = fieldname
         self.value = value
         self.message = message
         classname = self.__class__.__name__.lower().replace('field', '')
         self.rule = classname
+        self._validator = _validator
 
         if message is not None:
             self.message = message
@@ -189,8 +197,8 @@ class InField(ValidationField):
 
     def construct_message(self):
         if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
-            self.message = self.Meta.message.replace('{#fieldname#}', self.fieldname)
-            self.message = self.message.replace('{#values#}', ', '.join(self.Meta.values))
+            super(InField, self).construct_message()
+            self.message = self.message.replace('{#values#}', ', '.join(self.get_values()))
 
     def validate(self):
         if str(self.value) in self.get_values() or self.value == '' or self.value is None:
@@ -223,7 +231,7 @@ class MaxField(ValidationField):
     def construct_message(self):
         if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
             super(MaxField, self).construct_message()
-            self.message = self.message.replace('{#value#}', str(self.Meta.value))
+            self.message = self.message.replace('{#value#}', str(self.get_value()))
 
     def validate(self):
         if self.value is None:
@@ -263,7 +271,7 @@ class MinField(ValidationField):
     def construct_message(self):
         if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
             super(MinField, self).construct_message()
-            self.message = self.message.replace('{#value#}', str(self.Meta.value))
+            self.message = self.message.replace('{#value#}', str(self.get_value()))
 
     def validate(self):
         if self.value is None:
@@ -293,8 +301,8 @@ class NotInField(ValidationField):
 
     def construct_message(self):
         if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
-            self.message = self.Meta.message.replace('{#fieldname#}', self.fieldname)
-            self.message = self.message.replace('{#values#}', ', '.join(self.Meta.values))
+            super(NotInField, self).construct_message()
+            self.message = self.message.replace('{#values#}', ', '.join(self.get_values()))
 
     def validate(self):
         if str(self.value) not in self.get_values() or self.value == '' or self.value is None:
@@ -314,20 +322,37 @@ class BooleanField(ValidationField):
         return self._invoke_error()
 
 
-def prepare_validation_errors(errors, compact=False):
-    errors_dict = {}
-    errors_arr = []
+class LessThanField(ValidationField):
+    class Meta:
+        message = 'Field {#fieldname#} must be less than the field {#otherfieldname#} in size'
+        value = None
 
-    for err_arr in errors:
-        errs = []
+    def set_value(self, value):
+        self.Meta.value = value
+        self.construct_message()
 
-        for err in err_arr[1]:
-            errs.append(err)
-            errors_arr.append(err)
+    def get_value(self):
+        return self.Meta.value
 
-        errors_dict[err_arr[0]] = errs
+    def construct_message(self):
+        if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
+            super(LessThanField, self).construct_message()
+            self.message = self.message.replace('{#otherfieldname#}', str(self.get_value()))
 
-    if compact:
-        return errors_arr
+    def validate(self):
+        othervalue = self._validator.data[self.get_value()]
 
-    return errors_dict
+        if is_iterable(self.value) and not is_iterable(othervalue) \
+            or is_numeric(self.value) and not is_numeric(othervalue) \
+                or not is_iterable(self.value) and not is_numeric(self.value) and type(self.value) != type(othervalue):
+            raise ValueError('The two values in a "less than" comparison must be of the same type. Found %s and %s.' %
+                             (self.value.__class__.__name__, othervalue.__class__.__name__))
+
+        if is_str(self.value) or is_iterable(self.value):
+            if len(self.value) < len(othervalue):
+                return True
+        elif is_numeric(self.value):
+            if self.value < othervalue:
+                return True
+
+        return self._invoke_error()
