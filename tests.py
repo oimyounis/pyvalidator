@@ -451,5 +451,82 @@ class NotInRuleTest(unittest.TestCase):
         self.assertFalse(build_validator(data, rules))
 
 
+class BooleanRuleTest(unittest.TestCase):
+    def test_valid(self):
+        data = {'field': BLANK}
+        rules = {'field': 'boolean'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid2(self):
+        data = {'field': None}
+        rules = {'field': 'boolean'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid3(self):
+        data = {'field': True}
+        rules = {'field': 'boolean'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid4(self):
+        data = {'field': False}
+        rules = {'field': 'boolean'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid5(self):
+        data = {'field': 0}
+        rules = {'field': 'boolean'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid6(self):
+        data = {'field': 1}
+        rules = {'field': 'boolean'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid7(self):
+        data = {'field': '0'}
+        rules = {'field': 'boolean'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid8(self):
+        data = {'field': '1'}
+        rules = {'field': 'boolean'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_invalid(self):
+        data = {'field': '3'}
+        rules = {'field': 'boolean'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid2(self):
+        data = {'field': '56.5'}
+        rules = {'field': ' boolean '}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid3(self):
+        data = {'field': 'two'}
+        rules = {'field': 'boolean'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid4(self):
+        data = {'field': 3}
+        rules = {'field': 'boolean'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid5(self):
+        data = {'field': WHITE_SPACES}
+        rules = {'field': 'boolean'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid6(self):
+        data = {'field': 'True'}
+        rules = {'field': 'boolean'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid7(self):
+        data = {'field': 'False'}
+        rules = {'field': 'boolean'}
+        self.assertFalse(build_validator(data, rules))
+
+
 if __name__ == '__main__':
     unittest.main()

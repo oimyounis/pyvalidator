@@ -10,12 +10,11 @@ A simple python data validator inspired by Laravel's validator.
 - max &#10004;
 - min &#10004;
 - not_in &#10004;
-- date
-- unique
-- boolean
-- alpha
-- alpha_num
+- boolean &#10004;
 - lt
 - lte
 - gt
 - gte
+- alpha
+- alpha_num
+- unique

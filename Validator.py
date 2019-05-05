@@ -9,6 +9,11 @@ class Validator:
     RULE_MAX = 'max'
     RULE_MIN = 'min'
     RULE_NOT_IN = 'not_in'
+    RULE_BOOLEAN = 'boolean'
+
+    @classmethod
+    def _is_valid_rule(cls, rule):
+        return hasattr(cls, 'RULE_%s' % rule.upper())
 
     def __init__(self, data_dict, rules, messages={}):
         self.data = data_dict
@@ -30,6 +35,7 @@ class Validator:
         for fieldname, _rules in rules.items():
             _rules = str(_rules).strip()
             ruleparts = _rules.split('|')
+
             for rule in ruleparts:
                 rule = rule.strip()
                 rulevalue = ''
@@ -40,91 +46,39 @@ class Validator:
                         rule = ruleparts[0].strip()
                         rulevalue = ruleparts[1].strip()
 
+                    if not Validator._is_valid_rule(rule):
+                        continue
+
+                    message = None
+                    if fieldname in self.messages and rule in self.messages[fieldname]:
+                        message = self.messages[fieldname][rule]
+
+                    value = None
+                    if fieldname in self.data:
+                        value = self.data[fieldname]
+
+                    if fieldname not in self.fields:
+                        self.fields[fieldname] = []
+
                     if rule == Validator.RULE_REQUIRED:
-                        message = None
-                        if fieldname in self.messages and Validator.RULE_REQUIRED in self.messages[fieldname]:
-                            message = self.messages[fieldname][Validator.RULE_REQUIRED]
-
-                        value = None
-                        if fieldname in self.data:
-                            value = self.data[fieldname]
-
-                        if not fieldname in self.fields:
-                            self.fields[fieldname] = []
-
                         self.fields[fieldname].append(RequiredField(fieldname, value, message))
                     elif rule == Validator.RULE_EMAIL:
-                        message = None
-                        if fieldname in self.messages and Validator.RULE_EMAIL in self.messages[fieldname]:
-                            message = self.messages[fieldname][Validator.RULE_EMAIL]
-
-                        value = None
-                        if fieldname in self.data:
-                            value = self.data[fieldname]
-
-                        if not fieldname in self.fields:
-                            self.fields[fieldname] = []
-
                         self.fields[fieldname].append(EmailField(fieldname, value, message))
                     elif rule == Validator.RULE_NUMERIC:
-                        message = None
-                        if fieldname in self.messages and Validator.RULE_NUMERIC in self.messages[fieldname]:
-                            message = self.messages[fieldname][Validator.RULE_NUMERIC]
-
-                        value = None
-                        if fieldname in self.data:
-                            value = self.data[fieldname]
-
-                        if not fieldname in self.fields:
-                            self.fields[fieldname] = []
-
                         self.fields[fieldname].append(NumericField(fieldname, value, message))
                     elif rule == Validator.RULE_IN:
                         enumvalues = rulevalue.replace(' ', '').split(',')
-
-                        message = None
-                        if fieldname in self.messages and Validator.RULE_IN in self.messages[fieldname]:
-                            message = self.messages[fieldname][Validator.RULE_IN]
-
-                        value = None
-                        if fieldname in self.data:
-                            value = self.data[fieldname]
-
-                        if not fieldname in self.fields:
-                            self.fields[fieldname] = []
 
                         enumfield = InField(fieldname, value, message)
                         enumfield.set_values(enumvalues)
 
                         self.fields[fieldname].append(enumfield)
                     elif rule == Validator.RULE_MAX:
-                        message = None
-                        if fieldname in self.messages and Validator.RULE_MAX in self.messages[fieldname]:
-                            message = self.messages[fieldname][Validator.RULE_MAX]
-
-                        value = None
-                        if fieldname in self.data:
-                            value = self.data[fieldname]
-
-                        if not fieldname in self.fields:
-                            self.fields[fieldname] = []
-
                         maxfield = MaxField(fieldname, value, message)
                         maxfield.set_value(rulevalue)
 
                         self.fields[fieldname].append(maxfield)
                     elif rule == Validator.RULE_MIN:
-                        message = None
-                        if fieldname in self.messages and Validator.RULE_MIN in self.messages[fieldname]:
-                            message = self.messages[fieldname][Validator.RULE_MIN]
-
-                        value = None
-                        if fieldname in self.data:
-                            value = self.data[fieldname]
-
-                        if not fieldname in self.fields:
-                            self.fields[fieldname] = []
-
                         minfield = MinField(fieldname, value, message)
                         minfield.set_value(rulevalue)
 
@@ -132,21 +86,12 @@ class Validator:
                     elif rule == Validator.RULE_NOT_IN:
                         enumvalues = rulevalue.replace(' ', '').split(',')
 
-                        message = None
-                        if fieldname in self.messages and Validator.RULE_NOT_IN in self.messages[fieldname]:
-                            message = self.messages[fieldname][Validator.RULE_NOT_IN]
-
-                        value = None
-                        if fieldname in self.data:
-                            value = self.data[fieldname]
-
-                        if not fieldname in self.fields:
-                            self.fields[fieldname] = []
-
                         enumfield = NotInField(fieldname, value, message)
                         enumfield.set_values(enumvalues)
 
                         self.fields[fieldname].append(enumfield)
+                    elif rule == Validator.RULE_BOOLEAN:
+                        self.fields[fieldname].append(BooleanField(fieldname, value, message))
 
     def valid(self):
         valid = True
@@ -353,6 +298,17 @@ class NotInField(ValidationField):
 
     def validate(self):
         if str(self.value) not in self.get_values() or self.value == '' or self.value is None:
+            return True
+
+        return self._invoke_error()
+
+
+class BooleanField(ValidationField):
+    class Meta:
+        message = 'Field {#fieldname#} must be one of these values: True, False, 0, 1, "0" or "1"'
+
+    def validate(self):
+        if self.value in (True, False, 0, 1, '0', '1', '', None):
             return True
 
         return self._invoke_error()
