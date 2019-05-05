@@ -199,6 +199,11 @@ class InRuleTest(unittest.TestCase):
         rules = {'field': 'in:one,two,three'}
         self.assertTrue(build_validator(data, rules))
 
+    def test_valid6(self):
+        data = {'field': 3}
+        rules = {'field': 'in:3,6,8,1,10e-2'}
+        self.assertTrue(build_validator(data, rules))
+
     def test_invalid(self):
         data = {'field': WHITE_SPACES}
         rules = {'field': 'in:one,two,three'}
@@ -212,11 +217,6 @@ class InRuleTest(unittest.TestCase):
     def test_invalid3(self):
         data = {'field': '3'}
         rules = {'field': 'in:3.5,6,8,1,10e-2'}
-        self.assertFalse(build_validator(data, rules))
-
-    def test_invalid4(self):
-        data = {'field': 3}
-        rules = {'field': 'in:3,6,8,1,10e-2'}
         self.assertFalse(build_validator(data, rules))
 
 
@@ -401,6 +401,53 @@ class MinRuleTest(unittest.TestCase):
     def test_invalid8(self):
         data = {'field': (1, 2, 3, 4, 5, 6)}
         rules = {'field': 'min:7'}
+        self.assertFalse(build_validator(data, rules))
+
+
+class NotInRuleTest(unittest.TestCase):
+    def test_valid(self):
+        data = {'field': BLANK}
+        rules = {'field': 'not_in:one,two,three'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid2(self):
+        data = {'field': None}
+        rules = {'field': 'not_in:one,two,three'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid3(self):
+        data = {'field': WHITE_SPACES}
+        rules = {'field': 'not_in:one,two,three'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid4(self):
+        data = {'field': 'four'}
+        rules = {'field': 'not_in:one,two,three'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid5(self):
+        data = {'field': '3'}
+        rules = {'field': 'not_in:3.5,6,8,1,10e-2'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_invalid(self):
+        data = {'field': '3'}
+        rules = {'field': 'not_in:9,7,3,45'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid2(self):
+        data = {'field': '56.5'}
+        rules = {'field': ' not_in : 9 , 56.5 ,7 ,3,45 '}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid3(self):
+        data = {'field': 'two'}
+        rules = {'field': 'not_in:one,two,three'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid4(self):
+        data = {'field': 3}
+        rules = {'field': 'not_in:3,6,8,1,10e-2'}
         self.assertFalse(build_validator(data, rules))
 
 

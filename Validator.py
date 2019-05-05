@@ -8,6 +8,7 @@ class Validator:
     RULE_IN = 'in'
     RULE_MAX = 'max'
     RULE_MIN = 'min'
+    RULE_NOT_IN = 'not_in'
 
     def __init__(self, data_dict, rules, messages={}):
         self.data = data_dict
@@ -128,6 +129,24 @@ class Validator:
                         minfield.set_value(rulevalue)
 
                         self.fields[fieldname].append(minfield)
+                    elif rule == Validator.RULE_NOT_IN:
+                        enumvalues = rulevalue.replace(' ', '').split(',')
+
+                        message = None
+                        if fieldname in self.messages and Validator.RULE_NOT_IN in self.messages[fieldname]:
+                            message = self.messages[fieldname][Validator.RULE_NOT_IN]
+
+                        value = None
+                        if fieldname in self.data:
+                            value = self.data[fieldname]
+
+                        if not fieldname in self.fields:
+                            self.fields[fieldname] = []
+
+                        enumfield = NotInField(fieldname, value, message)
+                        enumfield.set_values(enumvalues)
+
+                        self.fields[fieldname].append(enumfield)
 
     def valid(self):
         valid = True
@@ -229,7 +248,7 @@ class InField(ValidationField):
             self.message = self.message.replace('{#values#}', ', '.join(self.Meta.values))
 
     def validate(self):
-        if self.value in self.Meta.values or self.value == '' or self.value is None:
+        if str(self.value) in self.get_values() or self.value == '' or self.value is None:
             return True
 
         return self._invoke_error()
@@ -311,6 +330,30 @@ class MinField(ValidationField):
         elif isinstance(self.value, (int, float)):
             if self.value >= self.get_value():
                 return True
+
+        return self._invoke_error()
+
+
+class NotInField(ValidationField):
+    class Meta:
+        message = 'Field {#fieldname#} must not be one of these values: {#values#}'
+        values = []
+
+    def set_values(self, values):
+        self.Meta.values = values
+        self.construct_message()
+
+    def get_values(self):
+        return self.Meta.values
+
+    def construct_message(self):
+        if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
+            self.message = self.Meta.message.replace('{#fieldname#}', self.fieldname)
+            self.message = self.message.replace('{#values#}', ', '.join(self.Meta.values))
+
+    def validate(self):
+        if str(self.value) not in self.get_values() or self.value == '' or self.value is None:
+            return True
 
         return self._invoke_error()
 
