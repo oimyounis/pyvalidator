@@ -268,3 +268,39 @@ class LessThanEqualField(ValidationField):
                 return True
 
         return self._invoke_error()
+
+
+class GreaterThanField(ValidationField):
+    class Meta:
+        message = 'Field {#fieldname#} must be greater than the field {#otherfieldname#} in size'
+        value = None
+
+    def set_value(self, value):
+        self.Meta.value = value
+        self.construct_message()
+
+    def get_value(self):
+        return self.Meta.value
+
+    def construct_message(self):
+        if hasattr(self, 'Meta') and hasattr(self.Meta, 'message'):
+            super(GreaterThanField, self).construct_message()
+            self.message = self.message.replace('{#otherfieldname#}', str(self.get_value()))
+
+    def validate(self):
+        othervalue = self._validator.data[self.get_value()]
+
+        if is_iterable(self.value) and not is_iterable(othervalue) \
+            or is_numeric(self.value) and not is_numeric(othervalue) \
+                or not is_iterable(self.value) and not is_numeric(self.value) and type(self.value) != type(othervalue):
+            raise ValueError('The two values in a "greater than" comparison must be of the same type. Found %s and %s.' %
+                             (self.value.__class__.__name__, othervalue.__class__.__name__))
+
+        if is_str(self.value) or is_iterable(self.value):
+            if len(self.value) > len(othervalue):
+                return True
+        elif is_numeric(self.value):
+            if self.value > othervalue:
+                return True
+
+        return self._invoke_error()

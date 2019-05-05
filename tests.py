@@ -702,5 +702,87 @@ class LessThanEqualRuleTest(unittest.TestCase):
     #     self.assertFalse(build_validator(data, rules))
 
 
+class GreaterThanRuleTest(unittest.TestCase):
+    def test_valid(self):
+        data = {'field1': 15, 'field2': 12}
+        rules = {'field1': 'gt:field2'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid2(self):
+        data = {'field1': 15, 'field2': 16}
+        rules = {'field2': 'gt:field1'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid3(self):
+        data = {'field1': 'word word', 'field2': 'word'}
+        rules = {'field1': 'gt:field2'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid4(self):
+        data = {'field1': 'word', 'field2': 'word word'}
+        rules = {'field2': 'gt:field1'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid5(self):
+        data = {'field1': [1, 2, 3, 4, 5], 'field2': (1, 2, 3, 4)}
+        rules = {'field1': 'gt:field2'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid6(self):
+        data = {'field1': {1, 2, 3, 4}, 'field2': [1, 2, 3, 4, 5]}
+        rules = {'field2': 'gt:field1'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid7(self):
+        data = {'field1': 12.5, 'field2': 12}
+        rules = {'field1': 'gt:field2'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid8(self):
+        data = {'field1': 10e-2, 'field2': 10e-4}
+        rules = {'field1': 'gt:field2'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid9(self):
+        data = {'field1': WHITE_SPACES, 'field2': BLANK}
+        rules = {'field1': 'gt:field2'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_invalid(self):
+        data = {'field1': 15, 'field2': 15}
+        rules = {'field1': 'gt:field2'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid2(self):
+        data = {'field1': 13, 'field2': 15}
+        rules = {'field1': 'gt:field2'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid3(self):
+        data = {'field1': 15, 'field2': 15.1}
+        rules = {'field1': 'gt:field2'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid4(self):
+        data = {'field1': [1, 2, 3], 'field2': [1, 2, 3, 4, 5]}
+        rules = {'field1': 'gt:field2'}
+        self.assertFalse(build_validator(data, rules))
+
+    # def test_invalid5(self):  # raises a ValueError exception
+    #     data = {'field1': WHITE_SPACES, 'field2': [1, 2, 3]}
+    #     rules = {'field1': 'gt:field2'}
+    #     self.assertFalse(build_validator(data, rules))
+
+    # def test_invalid6(self):  # raises a ValueError exception
+    #     data = {'field1': None, 'field2': [1, 2, 3]}
+    #     rules = {'field1': 'gt:field2'}
+    #     self.assertFalse(build_validator(data, rules))
+
+    # def test_invalid7(self):  # raises a ValueError exception
+    #     data = {'field1': BLANK, 'field2': 20}
+    #     rules = {'field1': 'gt:field2'}
+    #     self.assertFalse(build_validator(data, rules))
+
+
 if __name__ == '__main__':
     unittest.main()

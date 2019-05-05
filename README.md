@@ -13,7 +13,7 @@ A simple python data validator inspired by Laravel's validator.
 - boolean &#10004;
 - lt &#10004;
 - lte &#10004;
-- gt
+- gt &#10004;
 - gte
 - alpha
 - alpha_num
