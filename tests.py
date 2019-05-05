@@ -312,5 +312,97 @@ class MaxRuleTest(unittest.TestCase):
         self.assertFalse(build_validator(data, rules))
 
 
+class MinRuleTest(unittest.TestCase):
+    def test_valid(self):
+        data = {'field': 6}
+        rules = {'field': 'min:5'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid2(self):
+        data = {'field': 6}
+        rules = {'field': 'min:6'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid3(self):
+        data = {'field': 'word'}
+        rules = {'field': 'min:3'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid4(self):
+        data = {'field': 'word'}
+        rules = {'field': 'min:4'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid5(self):
+        data = {'field': [1, 2, 3, 4, 5, 6]}
+        rules = {'field': 'min:5'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid6(self):
+        data = {'field': [6, 7, -8, 9, -10]}
+        rules = {'field': 'min:5'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid7(self):
+        data = {'field': (1, 2, 3, 4, 5, 6, 7, 8)}
+        rules = {'field': 'min:0'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid8(self):
+        data = {'field': (6, 7, -8, 9, -10)}
+        rules = {'field': 'min:5'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid9(self):
+        data = {'field': '15645'}
+        rules = {'field': 'min:4'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_valid10(self):
+        data = {'field': None}
+        rules = {'field': 'min:8'}
+        self.assertTrue(build_validator(data, rules))
+
+    def test_invalid(self):
+        data = {'field': 15}
+        rules = {'field': 'min:25'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid2(self):
+        data = {'field': 14}
+        rules = {'field': 'min:14.5'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid3(self):
+        data = {'field': 14.99}
+        rules = {'field': 'min:15'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid4(self):
+        data = {'field': '15.5'}
+        rules = {'field': 'min:9'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid5(self):
+        data = {'field': 'word word'}
+        rules = {'field': 'min:13'}
+        self.assertFalse(build_validator(data, rules))
+
+    # def test_invalid6(self):  # This will throw a ValueError exception
+    #     data = {'field': 'word word'}
+    #     rules = {'field': 'min:invalid'}
+    #     self.assertFalse(build_validator(data, rules))
+
+    def test_invalid7(self):
+        data = {'field': [1, 2, "word", 6]}
+        rules = {'field': 'min:5'}
+        self.assertFalse(build_validator(data, rules))
+
+    def test_invalid8(self):
+        data = {'field': (1, 2, 3, 4, 5, 6)}
+        rules = {'field': 'min:7'}
+        self.assertFalse(build_validator(data, rules))
+
+
 if __name__ == '__main__':
     unittest.main()

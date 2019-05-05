@@ -265,15 +265,6 @@ class MaxField(ValidationField):
         if self.value is None:
             return True
 
-        isstr = isinstance(self.value, str)
-        isfloating = isstr and self.value.find('.') > -1
-
-        if isstr:
-            try:
-                self.value = float(self.value) if isfloating else int(self.value)
-            except ValueError:
-                pass
-
         if isinstance(self.value, (str, list, tuple, set)):
             if len(self.value) <= self.get_value():
                 return True
@@ -313,15 +304,6 @@ class MinField(ValidationField):
     def validate(self):
         if self.value is None:
             return True
-
-        isstr = isinstance(self.value, str)
-        isfloating = isstr and self.value.find('.') > -1
-
-        if isstr:
-            try:
-                self.value = float(self.value) if isfloating else int(self.value)
-            except ValueError:
-                pass
 
         if isinstance(self.value, (str, list, tuple, set)):
             if len(self.value) >= self.get_value():
