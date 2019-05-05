@@ -1,6 +1,6 @@
 import unittest
 
-from .Validator import Validator
+from .validator import Validator
 
 
 WHITE_SPACES = "    "
