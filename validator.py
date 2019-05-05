@@ -11,6 +11,7 @@ class Validator:
     RULE_NOT_IN = 'not_in'
     RULE_BOOLEAN = 'boolean'
     RULE_LT = 'lt'
+    RULE_LTE = 'lte'
 
     @classmethod
     def _is_valid_rule(cls, rule):
@@ -98,6 +99,11 @@ class Validator:
                         lessthanfield.set_value(rulevalue)
 
                         self.fields[fieldname].append(lessthanfield)
+                    elif rule == Validator.RULE_LTE:
+                        lessthaneqfield = LessThanEqualField(fieldname, value, message, self)
+                        lessthaneqfield.set_value(rulevalue)
+
+                        self.fields[fieldname].append(lessthaneqfield)
 
     def valid(self):
         valid = True
