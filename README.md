@@ -14,7 +14,7 @@ A simple python data validator inspired by Laravel's validator.
 - lt &#10004;
 - lte &#10004;
 - gt &#10004;
-- gte
+- gte &#10004;
 - alpha
 - alpha_num
 - unique
